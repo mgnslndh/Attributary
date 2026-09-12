@@ -5,6 +5,10 @@
     <ProjectReference Include="..\Attributary.Diagnostics\Attributary.Diagnostics.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <PackageReference Include="YamlDotNet" Version="18.1.0" />
+  </ItemGroup>
+
   
 
 </Project>
