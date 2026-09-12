@@ -36,4 +36,14 @@ public class DefaultRuleSetProviderTests
         await Assert.That(gpl3.Policy).IsEqualTo(LicensePolicy.Warn);
         await Assert.That(gpl3.Flags).Contains(ObligationFlag.SourceOffer).And.Contains(ObligationFlag.CopyleftStrong);
     }
+
+    [Test]
+    public async Task LoadRawYaml_ContainsDefaultsAndRulesKeys()
+    {
+        var provider = new DefaultRuleSetProvider(new YamlRuleSetLoader());
+
+        var yaml = provider.LoadRawYaml();
+
+        await Assert.That(yaml).Contains("defaults:").And.Contains("rules:").And.Contains("MIT");
+    }
 }

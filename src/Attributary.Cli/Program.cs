@@ -19,6 +19,13 @@ app.Configure(config =>
         license.AddCommand<LicenseListCommand>("list");
         license.AddCommand<LicenseShowCommand>("show");
     });
+    config.AddBranch("cache", cache =>
+    {
+        cache.AddCommand<CacheClearCommand>("clear");
+        cache.AddCommand<CacheListCommand>("list");
+        cache.AddCommand<CachePathCommand>("path");
+    });
+    config.AddCommand<InitCommand>("init");
 });
 
 return app.Run(args);

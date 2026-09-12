@@ -52,8 +52,7 @@ public sealed class GenerateRunner(IAnsiConsole console)
 
     private static IReadOnlyList<ILicenseSource> BuildSources(GenerateCliOptions options)
     {
-        var cacheDir = options.CacheDir ?? Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Attributary", "cache");
+        var cacheDir = CacheDirectoryResolver.Resolve(options.CacheDir);
         var store = new FileSystemLicenseCacheStore(cacheDir);
 
         ILicenseSource WithCache(ILicenseSource source) => options.NoCache ? source : new CachingLicenseSource(source, store);
