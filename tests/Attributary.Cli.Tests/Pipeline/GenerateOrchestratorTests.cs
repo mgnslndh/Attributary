@@ -89,4 +89,31 @@ public class GenerateOrchestratorTests
 
         await Assert.That(diagnostics.Diagnostics.Select(d => d.Descriptor.Code)).Contains("ATT3010");
     }
+
+    [Test]
+    public async Task RunAsync_UnresolvableLicenseExpression_ReportsExactlyOneDiagnosticButStillIncludesComponentInReport()
+    {
+        var path = Path.Combine(Path.GetTempPath(), $"attributary-{Guid.NewGuid()}.cdx.json");
+        File.WriteAllText(path, """
+            {
+              "bomFormat": "CycloneDX", "specVersion": "1.5", "version": 1,
+              "components": [
+                { "type": "library", "name": "Qux", "version": "4.0.0",
+                  "copyright": "Copyright (c) Qux Inc.",
+                  "licenses": [ { "expression": "(MIT OR Apache-2.0)" } ] }
+              ]
+            }
+            """);
+        var chain = new LicenseResolutionChain([new SbomEmbeddedSource(), new SpdxCanonicalSource()]);
+        var diagnostics = new DiagnosticSink(SeverityOverrides.None);
+        var orchestrator = new GenerateOrchestrator(new CycloneDxIngestor(), chain, new ObligationPlanBuilder(new RuleMatcher()), diagnostics);
+        var ruleSet = new DefaultRuleSetProvider(new YamlRuleSetLoader()).Load();
+
+        var output = await orchestrator.RunAsync(path, ruleSet, groupByLicense: true, embedLicenseText: true, failFast: false, CancellationToken.None);
+
+        await Assert.That(diagnostics.Diagnostics).Count().IsEqualTo(1);
+        await Assert.That(diagnostics.Diagnostics.Single().Descriptor.Code).IsEqualTo("ATT2001");
+        await Assert.That(output.Report.Entries).Count().IsEqualTo(1);
+        await Assert.That(output.Report.Entries[0].ComponentName).IsEqualTo("Qux");
+    }
 }

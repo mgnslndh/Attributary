@@ -33,9 +33,12 @@ public sealed class GenerateOrchestrator(
             var plan = obligationPlanBuilder.Build(resolution, ruleSet, conditionResults);
             plans.Add(plan);
 
-            var context = $"{component.Name} {component.Version}";
-            ReportPolicyDiagnostic(plan, context);
-            ReportUnresolvedObligations(plan, context);
+            if (resolution.ResolvedLicenseId is not null)
+            {
+                var context = $"{component.Name} {component.Version}";
+                ReportPolicyDiagnostic(plan, context);
+                ReportUnresolvedObligations(plan, context);
+            }
 
             if (failFast && diagnostics.HasErrors)
                 break;

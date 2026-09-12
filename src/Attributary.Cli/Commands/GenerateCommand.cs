@@ -17,7 +17,7 @@ public sealed class GenerateCommand(GenerateRunner runner) : AsyncCommand<Genera
             settings.SbomPath,
             settings.OutDir,
             formats,
-            GroupByLicense: settings.GroupBy.Equals("license", StringComparison.OrdinalIgnoreCase),
+            GroupByLicense: ParseGroupBy(settings.GroupBy),
             EmbedLicenseText: !settings.NoEmbedLicenseText,
             settings.DryRun,
             settings.FailFast,
@@ -28,4 +28,11 @@ public sealed class GenerateCommand(GenerateRunner runner) : AsyncCommand<Genera
 
         return await runner.RunAsync(options, cancellationToken);
     }
+
+    private static bool ParseGroupBy(string groupBy) => groupBy.ToLowerInvariant() switch
+    {
+        "license" => true,
+        "component" => false,
+        _ => throw new ArgumentException($"Invalid --group-by value '{groupBy}'; expected 'license' or 'component'.")
+    };
 }
