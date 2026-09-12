@@ -33,10 +33,16 @@ public sealed class LicenseListCommand(IAnsiConsole console) : Command<LicenseLi
                 $"{component.Name} {component.Version}",
                 licenseId,
                 mergedRule.Policy.ToString(),
-                (mergedRule != bundledRule).ToString());
+                (!RulesAreEquivalent(mergedRule, bundledRule)).ToString());
         }
 
         console.Write(table);
         return 0;
     }
+
+    private static bool RulesAreEquivalent(LicenseRule a, LicenseRule b) =>
+        a.IdPattern == b.IdPattern
+        && a.Policy == b.Policy
+        && a.Require.Select(o => (o.Kind, o.Condition)).OrderBy(t => t.Kind).SequenceEqual(b.Require.Select(o => (o.Kind, o.Condition)).OrderBy(t => t.Kind))
+        && a.Flags.OrderBy(f => f).SequenceEqual(b.Flags.OrderBy(f => f));
 }
