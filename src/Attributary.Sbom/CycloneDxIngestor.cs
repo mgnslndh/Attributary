@@ -41,6 +41,12 @@ public sealed class CycloneDxIngestor
         if (licenses is null || licenses.Count == 0)
             return LicenseExpression.FromName("UNKNOWN");
 
+        if (licenses.Count > 1)
+        {
+            var combined = string.Join(" AND ", licenses.Select(ResolveEntryIdentifier));
+            return LicenseExpression.FromExpression(combined);
+        }
+
         var first = licenses[0];
         if (first.Expression is not null)
             return LicenseExpression.FromExpression(first.Expression);
@@ -50,6 +56,9 @@ public sealed class CycloneDxIngestor
 
         return LicenseExpression.FromName(first.License?.Name ?? "UNKNOWN");
     }
+
+    private static string ResolveEntryIdentifier(LicenseChoice entry) =>
+        entry.Expression ?? entry.License?.Id ?? entry.License?.Name ?? "UNKNOWN";
 
     private static ExternalReferenceType MapReferenceType(CdxExternalReference.ExternalReferenceType type) => type switch
     {

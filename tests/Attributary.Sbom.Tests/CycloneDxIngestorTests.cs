@@ -11,7 +11,7 @@ public class CycloneDxIngestorTests
 
         var components = ingestor.Ingest(Path.Combine("fixtures", "simple-mit.cdx.json"));
 
-        await Assert.That(components).HasCount().EqualTo(1);
+        await Assert.That(components).Count().IsEqualTo(1);
         var component = components[0];
         await Assert.That(component.Name).IsEqualTo("Newtonsoft.Json");
         await Assert.That(component.Version).IsEqualTo("13.0.3");
@@ -29,10 +29,22 @@ public class CycloneDxIngestorTests
 
         var component = components[0];
         await Assert.That(component.DeclaredLicense.SpdxExpression).IsEqualTo("(MIT OR Apache-2.0)");
-        await Assert.That(component.ExternalReferences).HasCount().EqualTo(1);
+        await Assert.That(component.ExternalReferences).Count().IsEqualTo(1);
         await Assert.That(component.ExternalReferences[0].Type).IsEqualTo(ExternalReferenceType.Vcs);
         await Assert.That(component.ExternalReferences[0].Url).IsEqualTo("https://github.com/example/dual-licensed-lib");
-        await Assert.That(component.Evidence).HasCount().EqualTo(1);
+        await Assert.That(component.Evidence).Count().IsEqualTo(1);
         await Assert.That(component.Evidence[0].SpdxId).IsEqualTo("MIT");
+    }
+
+    [Test]
+    public async Task Ingest_MultiEntryLicensesArray_CombinesAllEntriesAsAndExpression()
+    {
+        var ingestor = new CycloneDxIngestor();
+
+        var components = ingestor.Ingest(Path.Combine("fixtures", "multi-license-array.cdx.json"));
+
+        await Assert.That(components).Count().IsEqualTo(1);
+        var component = components[0];
+        await Assert.That(component.DeclaredLicense.SpdxExpression).IsEqualTo("MIT AND JSON");
     }
 }
