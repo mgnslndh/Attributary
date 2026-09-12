@@ -352,7 +352,7 @@ public class DiagnosticSinkTests
 
         sink.Report(descriptor, "Component X is denied", "X 1.0.0");
 
-        await Assert.That(sink.Diagnostics).HasCount().EqualTo(1);
+        await Assert.That(sink.Diagnostics).Count().IsEqualTo(1);
         await Assert.That(sink.Diagnostics[0].EffectiveSeverity).IsEqualTo(DiagnosticSeverity.Error);
         await Assert.That(sink.HasErrors).IsTrue();
     }
@@ -574,7 +574,7 @@ public class CycloneDxIngestorTests
 
         var components = ingestor.Ingest(Path.Combine("fixtures", "simple-mit.cdx.json"));
 
-        await Assert.That(components).HasCount().EqualTo(1);
+        await Assert.That(components).Count().IsEqualTo(1);
         var component = components[0];
         await Assert.That(component.Name).IsEqualTo("Newtonsoft.Json");
         await Assert.That(component.Version).IsEqualTo("13.0.3");
@@ -592,10 +592,10 @@ public class CycloneDxIngestorTests
 
         var component = components[0];
         await Assert.That(component.DeclaredLicense.SpdxExpression).IsEqualTo("(MIT OR Apache-2.0)");
-        await Assert.That(component.ExternalReferences).HasCount().EqualTo(1);
+        await Assert.That(component.ExternalReferences).Count().IsEqualTo(1);
         await Assert.That(component.ExternalReferences[0].Type).IsEqualTo(ExternalReferenceType.Vcs);
         await Assert.That(component.ExternalReferences[0].Url).IsEqualTo("https://github.com/example/dual-licensed-lib");
-        await Assert.That(component.Evidence).HasCount().EqualTo(1);
+        await Assert.That(component.Evidence).Count().IsEqualTo(1);
         await Assert.That(component.Evidence[0].SpdxId).IsEqualTo("MIT");
     }
 }
@@ -799,7 +799,7 @@ public class YamlRuleSetLoaderTests
         var ruleSet = new YamlRuleSetLoader().Load(Yaml);
 
         await Assert.That(ruleSet.UnknownLicenseDefault.Policy).IsEqualTo(LicensePolicy.Deny);
-        await Assert.That(ruleSet.UnknownLicenseDefault.Require).HasCount().EqualTo(2);
+        await Assert.That(ruleSet.UnknownLicenseDefault.Require).Count().IsEqualTo(2);
         await Assert.That(ruleSet.UnknownLicenseDefault.Require.Select(r => r.Kind))
             .Contains(ObligationKind.Copyright).And.Contains(ObligationKind.LicenseText);
     }
@@ -1077,7 +1077,7 @@ public class RuleMatcherTests
 
         await Assert.That(rule.Policy).IsEqualTo(LicensePolicy.Warn);
         await Assert.That(rule.Flags).Contains(ObligationFlag.SourceOffer);
-        await Assert.That(rule.Require.Select(r => r.Kind).Distinct()).HasCount().EqualTo(2);
+        await Assert.That(rule.Require.Select(r => r.Kind).Distinct()).Count().IsEqualTo(2);
     }
 }
 ```
@@ -2333,7 +2333,7 @@ public class FileSystemLicenseCacheStoreTests
 
         var keys = store.List();
 
-        await Assert.That(keys).HasCount().EqualTo(2);
+        await Assert.That(keys).Count().IsEqualTo(2);
     }
 }
 ```
@@ -2639,7 +2639,7 @@ public class LicenseTextsDocumentBuilderTests
 
         var document = LicenseTextsDocumentBuilder.Build(plans);
 
-        await Assert.That(document.Licenses).HasCount().EqualTo(1);
+        await Assert.That(document.Licenses).Count().IsEqualTo(1);
         await Assert.That(document.Licenses[0].LicenseId).IsEqualTo("MIT");
     }
 
@@ -2679,7 +2679,7 @@ public class NoticeDocumentBuilderTests
 
         var document = NoticeDocumentBuilder.Build(plans);
 
-        await Assert.That(document.Sections).HasCount().EqualTo(1);
+        await Assert.That(document.Sections).Count().IsEqualTo(1);
         await Assert.That(document.Sections[0].NoticeText).IsEqualTo("Foo notice text");
     }
 
@@ -2957,7 +2957,7 @@ public class ComplianceReportDocumentBuilderTests
 
         var report = ComplianceReportDocumentBuilder.Build(plans);
 
-        await Assert.That(report.Entries).HasCount().EqualTo(1);
+        await Assert.That(report.Entries).Count().IsEqualTo(1);
         await Assert.That(report.Entries[0].SatisfiedObligations).Contains(ObligationKind.Copyright);
         await Assert.That(report.Entries[0].LicenseTextSource).IsEqualTo(ResolutionSourceStrategy.SpdxCanonical);
     }
@@ -2973,7 +2973,7 @@ public class ComplianceReportDocumentBuilderTests
 
         var report = ComplianceReportDocumentBuilder.Build(plans);
 
-        await Assert.That(report.FlaggedForReview).HasCount().EqualTo(1);
+        await Assert.That(report.FlaggedForReview).Count().IsEqualTo(1);
         await Assert.That(report.FlaggedForReview[0].ComponentName).IsEqualTo("Foo");
         await Assert.That(report.FlaggedForReview[0].Flags).Contains(ObligationFlag.SourceOffer);
     }
@@ -3942,7 +3942,7 @@ public class GenerateOrchestratorTests
 
         var output = await orchestrator.RunAsync(sbomPath, ruleSet, groupByLicense: true, embedLicenseText: true, failFast: false, CancellationToken.None);
 
-        await Assert.That(output.LicenseTexts.Licenses).HasCount().EqualTo(1);
+        await Assert.That(output.LicenseTexts.Licenses).Count().IsEqualTo(1);
         await Assert.That(output.Attribution.Rows[0].Copyright).IsEqualTo("Copyright (c) Foo Inc.");
         await Assert.That(output.Report.FlaggedForReview).IsEmpty();
         await Assert.That(diagnostics.Diagnostics).IsEmpty();
