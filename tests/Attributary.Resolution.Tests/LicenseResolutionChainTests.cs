@@ -61,6 +61,24 @@ public class LicenseResolutionChainTests
         await Assert.That(resolution.ResolvedLicenseId).IsNull();
         await Assert.That(callCount).IsEqualTo(0);
         await Assert.That(sink.Diagnostics.Single().Descriptor.Code).IsEqualTo("ATT2001");
+        await Assert.That(sink.Diagnostics.Single().Message).Contains("enrich the SBOM with a single license id");
+    }
+
+    [Test]
+    public async Task ResolveAsync_UnresolvedAndExpression_ReportsMultiLicenseFlavoredMessage()
+    {
+        var sources = new ILicenseSource[] { new CountingFakeSource(() => { }) };
+        var chain = new LicenseResolutionChain(sources);
+        var sink = new DiagnosticSink(SeverityOverrides.None);
+
+        var resolution = await chain.ResolveAsync(BuildComponent(LicenseExpression.FromExpression("MIT AND JSON")), sink, CancellationToken.None);
+
+        await Assert.That(resolution.ResolvedLicenseId).IsNull();
+        await Assert.That(sink.Diagnostics.Single().Descriptor.Code).IsEqualTo("ATT2001");
+        var message = sink.Diagnostics.Single().Message;
+        await Assert.That(message).Contains("multi-license expression 'MIT AND JSON'");
+        await Assert.That(message).Contains("simultaneous compliance");
+        await Assert.That(message).DoesNotContain("enrich the SBOM with a single license id");
     }
 
     private sealed class CountingFakeSource(Action onCalled) : ILicenseSource

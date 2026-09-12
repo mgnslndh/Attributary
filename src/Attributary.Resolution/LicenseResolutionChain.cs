@@ -12,8 +12,10 @@ public sealed class LicenseResolutionChain(IReadOnlyList<ILicenseSource> sources
 
         if (declared.SpdxExpression is { } expression)
         {
-            diagnostics.Report(ResolutionDiagnostics.OrExpressionUnresolved,
-                $"Component declares an unresolved license expression '{expression}'; enrich the SBOM with a single license id.", context);
+            var message = expression.Contains(" AND ")
+                ? $"Component declares a multi-license expression '{expression}' requiring simultaneous compliance with all listed licenses; enrich the SBOM to declare a single component per license, or add explicit support for this combination."
+                : $"Component declares an unresolved license expression '{expression}'; enrich the SBOM with a single license id.";
+            diagnostics.Report(ResolutionDiagnostics.OrExpressionUnresolved, message, context);
             return new LicenseResolution(component, null, null, null, null);
         }
 
