@@ -70,4 +70,36 @@ public class FileSystemLicenseCacheStoreTests
 
         await Assert.That(keys).Count().IsEqualTo(2);
     }
+
+    [Test]
+    public async Task Put_DiscriminatorsThatSanitizeToSameString_DoNotCollide()
+    {
+        var store = new FileSystemLicenseCacheStore(NewTempRoot());
+        var keyA = new CacheKey(ResolutionSourceStrategy.VcsRepository, "pkg:nuget/Foo@1.0.0");
+        var keyB = new CacheKey(ResolutionSourceStrategy.VcsRepository, "pkg_nuget_Foo@1.0.0");
+
+        store.Put(keyA, new CacheEntry("content for A", FileSystemLicenseCacheStore.ComputeSha256("content for A"), null, DateTimeOffset.UtcNow));
+        store.Put(keyB, new CacheEntry("content for B", FileSystemLicenseCacheStore.ComputeSha256("content for B"), null, DateTimeOffset.UtcNow));
+
+        var resultA = store.TryGet(keyA);
+        var resultB = store.TryGet(keyB);
+
+        await Assert.That(resultA).IsNotNull();
+        await Assert.That(resultA!.Content).IsEqualTo("content for A");
+        await Assert.That(resultB).IsNotNull();
+        await Assert.That(resultB!.Content).IsEqualTo("content for B");
+    }
+
+    [Test]
+    public async Task List_PreservesOriginalUnsanitizedDiscriminator()
+    {
+        var store = new FileSystemLicenseCacheStore(NewTempRoot());
+        var key = new CacheKey(ResolutionSourceStrategy.VcsRepository, "pkg:nuget/Foo@1.0.0");
+        store.Put(key, new CacheEntry("content", FileSystemLicenseCacheStore.ComputeSha256("content"), null, DateTimeOffset.UtcNow));
+
+        var keys = store.List();
+
+        await Assert.That(keys).Count().IsEqualTo(1);
+        await Assert.That(keys[0].Discriminator).IsEqualTo("pkg:nuget/Foo@1.0.0");
+    }
 }
