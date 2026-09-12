@@ -1,0 +1,42 @@
+using Attributary.Rules;
+using Attributary.Sbom;
+using Spectre.Console;
+using Spectre.Console.Cli;
+
+namespace Attributary.Cli.Commands;
+
+public sealed class LicenseListCommand(IAnsiConsole console) : Command<LicenseListCommandSettings>
+{
+    protected override int Execute(CommandContext context, LicenseListCommandSettings settings, CancellationToken cancellationToken)
+    {
+        var components = new CycloneDxIngestor().Ingest(settings.SbomPath);
+        var bundled = new DefaultRuleSetProvider(new YamlRuleSetLoader()).Load();
+        var merged = RuleSetConfigLoader.LoadMerged(settings.ConfigPath, new DefaultRuleSetProvider(new YamlRuleSetLoader()), new YamlRuleSetLoader());
+        var matcher = new RuleMatcher();
+
+        var table = new Table();
+        table.AddColumn("Component");
+        table.AddColumn("License");
+        table.AddColumn("Policy");
+        table.AddColumn("Custom rule");
+
+        foreach (var component in components)
+        {
+            var licenseId = component.DeclaredLicense.SpdxId
+                ?? component.DeclaredLicense.FreeTextName
+                ?? component.DeclaredLicense.SpdxExpression
+                ?? "UNKNOWN";
+            var mergedRule = matcher.Match(licenseId, merged);
+            var bundledRule = matcher.Match(licenseId, bundled);
+
+            table.AddRow(
+                $"{component.Name} {component.Version}",
+                licenseId,
+                mergedRule.Policy.ToString(),
+                (mergedRule != bundledRule).ToString());
+        }
+
+        console.Write(table);
+        return 0;
+    }
+}

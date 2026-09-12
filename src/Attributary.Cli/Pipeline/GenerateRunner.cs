@@ -47,15 +47,8 @@ public sealed class GenerateRunner(IAnsiConsole console)
         return diagnostics.HasErrors ? 1 : 0;
     }
 
-    private static RuleSet LoadRuleSet(string? configPath)
-    {
-        var baseline = new DefaultRuleSetProvider(new YamlRuleSetLoader()).Load();
-        if (configPath is null || !File.Exists(configPath))
-            return baseline;
-
-        var overrideRuleSet = new YamlRuleSetLoader().Load(File.ReadAllText(configPath));
-        return RuleSetMerger.Merge(baseline, overrideRuleSet);
-    }
+    private static RuleSet LoadRuleSet(string? configPath) =>
+        RuleSetConfigLoader.LoadMerged(configPath, new DefaultRuleSetProvider(new YamlRuleSetLoader()), new YamlRuleSetLoader());
 
     private static IReadOnlyList<ILicenseSource> BuildSources(GenerateCliOptions options)
     {

@@ -14,6 +14,11 @@ var app = new CommandApp(registrar);
 app.Configure(config =>
 {
     config.AddCommand<GenerateCommand>("generate");
+    config.AddBranch("license", license =>
+    {
+        license.AddCommand<LicenseListCommand>("list");
+        license.AddCommand<LicenseShowCommand>("show");
+    });
 });
 
 return app.Run(args);
