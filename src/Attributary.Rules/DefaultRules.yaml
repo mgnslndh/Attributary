@@ -1,0 +1,114 @@
+defaults:
+  unknownLicense:
+    policy: deny
+    require: [copyright, license-text]
+
+rules:
+  - id: MIT
+    policy: allow
+    require: [copyright, license-text]
+
+  - id: ISC
+    policy: allow
+    require: [copyright, license-text]
+
+  - id: BSD-2-Clause
+    policy: allow
+    require: [copyright, license-text]
+
+  - id: BSD-3-Clause
+    policy: allow
+    require: [copyright, license-text]
+    flags: [non-endorsement]
+
+  - id: BSD-4-Clause
+    policy: warn
+    require: [copyright, license-text]
+    flags: [advertising-clause]
+
+  - id: Apache-2.0
+    policy: allow
+    require:
+      - copyright
+      - license-text
+      - notice-text: { when: upstream-notice-present }
+    flags: [modification-disclosure, trademark-non-grant, patent-grant]
+
+  - id: MPL-2.0
+    policy: warn
+    require: [copyright, license-text]
+    flags: [source-offer, modification-disclosure, copyleft-weak]
+
+  - id: LGPL-2.1-*
+    policy: warn
+    require: [copyright, license-text]
+    flags: [source-offer, copyleft-weak]
+
+  - id: LGPL-3.0-*
+    policy: warn
+    require: [copyright, license-text]
+    flags: [source-offer, copyleft-weak]
+
+  - id: GPL-2.0-*
+    policy: warn
+    require: [copyright, license-text]
+    flags: [source-offer, copyleft-strong]
+
+  - id: GPL-3.0-*
+    policy: warn
+    require: [copyright, license-text]
+    flags: [source-offer, copyleft-strong]
+
+  - id: AGPL-3.0-*
+    policy: warn
+    require: [copyright, license-text]
+    flags: [source-offer, copyleft-strong]
+
+  - id: CDDL-1.0
+    policy: warn
+    require: [copyright, license-text]
+    flags: [source-offer, copyleft-weak]
+
+  - id: CDDL-1.1
+    policy: warn
+    require: [copyright, license-text]
+    flags: [source-offer, copyleft-weak]
+
+  - id: EPL-1.0
+    policy: warn
+    require: [copyright, license-text]
+    flags: [source-offer, patent-grant]
+
+  - id: EPL-2.0
+    policy: warn
+    require: [copyright, license-text]
+    flags: [source-offer, patent-grant]
+
+  - id: Python-2.0
+    policy: allow
+    require: [copyright, license-text]
+
+  - id: Zlib
+    policy: allow
+    require: [copyright, license-text]
+
+  - id: BSL-1.0
+    policy: allow
+    require: [copyright, license-text]
+
+  - id: Unlicense
+    policy: allow
+    require: [license-text]
+
+  - id: CC0-1.0
+    policy: allow
+    require: [license-text]
+
+  - id: WTFPL
+    policy: allow
+    require: [license-text]
+
+  - id: JSON
+    policy: deny
+    require: [copyright, license-text]
+    flags: [non-osi-approved]
