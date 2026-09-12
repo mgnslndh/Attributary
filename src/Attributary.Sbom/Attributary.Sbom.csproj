@@ -4,6 +4,10 @@
     <ProjectReference Include="..\Attributary.Domain\Attributary.Domain.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <PackageReference Include="CycloneDX.Core" Version="12.1.2" />
+  </ItemGroup>
+
   
 
 </Project>

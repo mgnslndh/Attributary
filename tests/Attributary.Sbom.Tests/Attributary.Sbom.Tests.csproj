@@ -12,4 +12,8 @@
     <ProjectReference Include="..\..\src\Attributary.Sbom\Attributary.Sbom.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Include="fixtures\**\*.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
 </Project>

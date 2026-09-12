@@ -1,0 +1,19 @@
+{
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.5",
+  "version": 1,
+  "components": [
+    {
+      "type": "library",
+      "name": "dual-licensed-lib",
+      "version": "2.0.0",
+      "licenses": [ { "expression": "(MIT OR Apache-2.0)" } ],
+      "externalReferences": [
+        { "type": "vcs", "url": "https://github.com/example/dual-licensed-lib" }
+      ],
+      "evidence": {
+        "licenses": [ { "license": { "id": "MIT" } } ]
+      }
+    }
+  ]
+}

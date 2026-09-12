@@ -1,0 +1,15 @@
+{
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.5",
+  "version": 1,
+  "components": [
+    {
+      "type": "library",
+      "name": "Newtonsoft.Json",
+      "version": "13.0.3",
+      "purl": "pkg:nuget/Newtonsoft.Json@13.0.3",
+      "copyright": "Copyright (c) 2007 James Newton-King",
+      "licenses": [ { "license": { "id": "MIT" } } ]
+    }
+  ]
+}
