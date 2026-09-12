@@ -33,7 +33,7 @@ public class YamlRuleSetLoaderTests
         var ruleSet = new YamlRuleSetLoader().Load(Yaml);
 
         await Assert.That(ruleSet.UnknownLicenseDefault.Policy).IsEqualTo(LicensePolicy.Deny);
-        await Assert.That(ruleSet.UnknownLicenseDefault.Require).HasCount().EqualTo(2);
+        await Assert.That(ruleSet.UnknownLicenseDefault.Require).Count().IsEqualTo(2);
         await Assert.That(ruleSet.UnknownLicenseDefault.Require.Select(r => r.Kind))
             .Contains(ObligationKind.Copyright).And.Contains(ObligationKind.LicenseText);
     }
