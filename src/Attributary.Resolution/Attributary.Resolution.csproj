@@ -5,6 +5,8 @@
     <ProjectReference Include="..\Attributary.Diagnostics\Attributary.Diagnostics.csproj" />
   </ItemGroup>
 
-  
+  <ItemGroup>
+    <EmbeddedResource Include="SpdxLicenseData\spdx-subset.json" />
+  </ItemGroup>
 
 </Project>

@@ -5,4 +5,5 @@ public sealed record LicenseResolution(
     string? ResolvedLicenseId,
     string? CopyrightText,
     string? LicenseText,
-    string? NoticeText);
+    string? NoticeText,
+    ResolutionProvenance? Provenance = null);
