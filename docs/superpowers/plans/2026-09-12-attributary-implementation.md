@@ -4465,7 +4465,7 @@ public sealed class GenerateRunner(IAnsiConsole console)
         var diagnostics = new DiagnosticSink(options.SeverityOverrides);
         var ruleSet = LoadRuleSet(options.ConfigPath);
         var chain = new LicenseResolutionChain(BuildSources(options));
-        var orchestrator = new Pipeline.GenerateOrchestrator(new CycloneDxIngestor(), chain, new ObligationPlanBuilder(new RuleMatcher()), diagnostics);
+        var orchestrator = new GenerateOrchestrator(new CycloneDxIngestor(), chain, new ObligationPlanBuilder(new RuleMatcher()), diagnostics);
 
         var output = await orchestrator.RunAsync(options.SbomPath, ruleSet, options.GroupByLicense, options.EmbedLicenseText, options.FailFast, ct);
 
@@ -5346,6 +5346,6 @@ git commit -m "chore(cli): package Attributary as a .NET tool"
 
 ## Known follow-ups (not covered by this plan)
 
-- **ATT0xxx / ATT1xxx / ATT4xxx are reserved but unused.** The diagnostic numbering scheme (Global Constraints, spec §8) ranges codes by stage, but this plan only wires `ATT2001` (Task 10) and `ATT3001`/`ATT3002`/`ATT3010` (Task 20) through the diagnostic sink. A malformed SBOM file (`CycloneDxIngestor.Ingest`), a malformed or unknown-obligation config file (`YamlRuleSetLoader`), and an unwritable output path (`GenerateRunner.WriteFiles`) currently throw raw exceptions instead of reporting a formatted `ATT1xxx`/`ATT0xxx`/`ATT4xxx` diagnostic. `IDiagnosticSink` and `MsBuildStyleDiagnosticFormatter` (Task 3) already exist and are directly reusable for this — it's a mechanical follow-up (wrap the relevant call sites in try/catch, report a descriptor, keep going or fail per severity) once the core pipeline built here is stable, not a redesign.
+- **ATT0xxx / ATT1xxx / ATT4xxx are reserved but unused, and `ATT2500` (cache integrity) is never raised.** The diagnostic numbering scheme (Global Constraints, spec §8) ranges codes by stage and specifically calls out `ATT2500` as a warning for a cache-integrity-check failure, but this plan only wires `ATT2001` (Task 10) and `ATT3001`/`ATT3002`/`ATT3010` (Task 20) through the diagnostic sink. A malformed SBOM file (`CycloneDxIngestor.Ingest`), a malformed or unknown-obligation config file (`YamlRuleSetLoader`), an unwritable output path (`GenerateRunner.WriteFiles`), and a tampered/corrupted cache entry (`FileSystemLicenseCacheStore.TryGet` in Task 11, which silently falls back to re-resolving on a hash mismatch) currently produce either a raw exception or no signal at all, instead of a formatted diagnostic. `IDiagnosticSink` and `MsBuildStyleDiagnosticFormatter` (Task 3) already exist and are directly reusable for all of these — it's a mechanical follow-up (wrap the relevant call sites, report a descriptor, keep going or fail per severity) once the core pipeline built here is stable, not a redesign.
 - **Config-file `diagnostics`/`output`/`cache` sections** are deferred per Task 23's scope note — v1 covers the same ground via CLI flags only.
 - Everything else listed in the spec's §12 "Deferred (v2+) ideas" remains deferred, unchanged.
