@@ -5,5 +5,6 @@ namespace Attributary.Resolution;
 public interface ILicenseSource
 {
     ResolutionSourceStrategy Strategy { get; }
+    bool IsLicenseIdSpecific { get; }
     Task<SourceResult> TryResolveAsync(SbomComponent component, string? licenseId, CancellationToken ct);
 }

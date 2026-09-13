@@ -10,6 +10,8 @@ public sealed partial class GitHubVcsSource(HttpClient httpClient) : ILicenseSou
 {
     public ResolutionSourceStrategy Strategy => ResolutionSourceStrategy.VcsRepository;
 
+    public bool IsLicenseIdSpecific => false;
+
     public async Task<SourceResult> TryResolveAsync(SbomComponent component, string? licenseId, CancellationToken ct)
     {
         var vcsRef = component.ExternalReferences.FirstOrDefault(r => r.Type == ExternalReferenceType.Vcs);

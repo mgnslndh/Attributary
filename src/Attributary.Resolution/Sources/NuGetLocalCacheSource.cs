@@ -7,6 +7,8 @@ public sealed class NuGetLocalCacheSource(string globalPackagesFolderPath) : ILi
 {
     public ResolutionSourceStrategy Strategy => ResolutionSourceStrategy.LocalPackageCache;
 
+    public bool IsLicenseIdSpecific => false;
+
     public Task<SourceResult> TryResolveAsync(SbomComponent component, string? licenseId, CancellationToken ct)
     {
         if (component.Purl is null || !component.Purl.StartsWith("pkg:nuget/", StringComparison.Ordinal))

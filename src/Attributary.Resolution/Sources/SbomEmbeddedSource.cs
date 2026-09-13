@@ -6,6 +6,8 @@ public sealed class SbomEmbeddedSource : ILicenseSource
 {
     public ResolutionSourceStrategy Strategy => ResolutionSourceStrategy.SbomEmbedded;
 
+    public bool IsLicenseIdSpecific => false;
+
     public Task<SourceResult> TryResolveAsync(SbomComponent component, string? licenseId, CancellationToken ct)
     {
         if (component.RawCopyright is null && component.EmbeddedLicenseText is null)

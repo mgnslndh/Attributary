@@ -6,6 +6,8 @@ public sealed class SbomEvidenceSource : ILicenseSource
 {
     public ResolutionSourceStrategy Strategy => ResolutionSourceStrategy.Evidence;
 
+    public bool IsLicenseIdSpecific => false;
+
     public Task<SourceResult> TryResolveAsync(SbomComponent component, string? licenseId, CancellationToken ct)
     {
         var texts = component.EvidenceCopyrightTexts ?? [];

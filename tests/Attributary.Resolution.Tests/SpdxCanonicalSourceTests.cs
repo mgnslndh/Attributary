@@ -28,4 +28,11 @@ public class SpdxCanonicalSourceTests
 
         await Assert.That(result.Resolved).IsFalse();
     }
+
+    [Test]
+    public async Task IsLicenseIdSpecific_IsTrue()
+    {
+        var source = new SpdxCanonicalSource();
+        await Assert.That(source.IsLicenseIdSpecific).IsTrue();
+    }
 }

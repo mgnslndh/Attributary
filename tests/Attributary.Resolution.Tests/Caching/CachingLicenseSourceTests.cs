@@ -7,6 +7,7 @@ file sealed class CountingSource(SourceResult result, ResolutionSourceStrategy s
 {
     public int CallCount { get; private set; }
     public ResolutionSourceStrategy Strategy => strategy;
+    public bool IsLicenseIdSpecific => strategy == ResolutionSourceStrategy.SpdxCanonical;
 
     public Task<SourceResult> TryResolveAsync(SbomComponent component, string? licenseId, CancellationToken ct)
     {

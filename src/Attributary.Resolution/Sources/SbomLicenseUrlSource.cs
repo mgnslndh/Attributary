@@ -6,6 +6,8 @@ public sealed class SbomLicenseUrlSource(HttpClient httpClient) : ILicenseSource
 {
     public ResolutionSourceStrategy Strategy => ResolutionSourceStrategy.LicenseUrl;
 
+    public bool IsLicenseIdSpecific => false;
+
     public async Task<SourceResult> TryResolveAsync(SbomComponent component, string? licenseId, CancellationToken ct)
     {
         var licenseRef = component.ExternalReferences.FirstOrDefault(r => r.Type == ExternalReferenceType.License);

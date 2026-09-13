@@ -9,6 +9,8 @@ public sealed class SpdxCanonicalSource : ILicenseSource
 
     public ResolutionSourceStrategy Strategy => ResolutionSourceStrategy.SpdxCanonical;
 
+    public bool IsLicenseIdSpecific => true;
+
     public Task<SourceResult> TryResolveAsync(SbomComponent component, string? licenseId, CancellationToken ct)
     {
         if (licenseId is null || !LicenseTexts.TryGetValue(licenseId, out var text))

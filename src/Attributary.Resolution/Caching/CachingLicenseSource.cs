@@ -6,6 +6,8 @@ public sealed class CachingLicenseSource(ILicenseSource inner, ILicenseCacheStor
 {
     public ResolutionSourceStrategy Strategy => inner.Strategy;
 
+    public bool IsLicenseIdSpecific => inner.IsLicenseIdSpecific;
+
     public async Task<SourceResult> TryResolveAsync(SbomComponent component, string? licenseId, CancellationToken ct)
     {
         var discriminator = inner.Strategy == ResolutionSourceStrategy.SpdxCanonical
