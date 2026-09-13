@@ -78,9 +78,11 @@ contributor and CI invoke the exact same entry point. Default target
 `attributary --version` and any DLL's file properties are meaningful for
 bug reports even though only the CLI is packed.
 
-Convention: annotated tags of the form `v0.1.0`, `v0.2.0`, etc. (MinVer's
-default `v` prefix; no config override needed). No tags exist yet in this
-repo, so until the first tag is pushed, builds report a version like
+Convention: annotated tags of the form `v0.1.0`, `v0.2.0`, etc. MinVer's
+default tag prefix is actually *empty* (bare `0.1.0`), so `Directory.Build.props`
+must set `<MinVerTagPrefix>v</MinVerTagPrefix>` explicitly to get the more
+common `v`-prefixed GitHub convention. No tags exist yet in this repo, so
+until the first tag is pushed, builds report a version like
 `0.0.0-alpha.0.<height>` — expected pre-release behavior, not a bug.
 
 The hardcoded `<Version>0.1.0</Version>` in `Attributary.Cli.csproj` is
