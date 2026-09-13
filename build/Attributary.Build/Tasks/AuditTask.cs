@@ -21,6 +21,10 @@ public sealed class AuditTask : FrostingTask<BuildContext>
             {
                 Arguments = "list Attributary.sln package --vulnerable --include-transitive",
                 RedirectStandardOutput = true,
+                EnvironmentVariables = new Dictionary<string, string>
+                {
+                    ["DOTNET_CLI_UI_LANGUAGE"] = "en",
+                },
             },
             out IEnumerable<string> redirectedOutput);
 
