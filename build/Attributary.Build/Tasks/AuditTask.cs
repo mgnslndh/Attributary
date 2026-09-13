@@ -36,7 +36,7 @@ public sealed class AuditTask : FrostingTask<BuildContext>
         }
 
         var projectLines = outputLines
-            .Where(line => line.TrimStart().StartsWith("The given project", StringComparison.Ordinal))
+            .Where(line => line.Contains("vulnerable packages", StringComparison.OrdinalIgnoreCase))
             .ToList();
 
         if (projectLines.Count == 0)
