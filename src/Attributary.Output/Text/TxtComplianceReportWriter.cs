@@ -19,7 +19,7 @@ public sealed class TxtComplianceReportWriter : IComplianceReportWriter
         sb.AppendLine("Flagged for review");
         sb.AppendLine(new string('-', 40));
         foreach (var flag in document.FlaggedForReview)
-            sb.AppendLine($"{flag.ComponentName} {flag.ComponentVersion} - policy: {flag.Policy}, flags: {string.Join(", ", flag.Flags)}");
+            sb.AppendLine($"{flag.ComponentName} {flag.ComponentVersion} - {string.Join(" AND ", flag.LicenseIds)} - policy: {flag.Policy}, flags: {string.Join(", ", flag.Flags)}");
 
         return sb.ToString();
     }
