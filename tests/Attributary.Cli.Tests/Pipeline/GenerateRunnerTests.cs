@@ -58,6 +58,54 @@ public class GenerateRunnerTests
         await Assert.That(exitCode).IsEqualTo(1);
     }
 
+    private static string WriteEvidenceOnlyCopyrightFixtureSbom()
+    {
+        var path = Path.Combine(Path.GetTempPath(), $"attributary-{Guid.NewGuid()}.cdx.json");
+        File.WriteAllText(path, """
+            {
+              "bomFormat": "CycloneDX", "specVersion": "1.5", "version": 1,
+              "components": [
+                { "type": "library", "name": "Foo", "version": "1.0.0",
+                  "licenses": [ { "license": { "id": "MIT" } } ],
+                  "evidence": { "copyright": [ { "text": "Copyright (c) Evidence Co." } ] } }
+              ]
+            }
+            """);
+        return path;
+    }
+
+    [Test]
+    public async Task RunAsync_EvidenceOnlyCopyright_WithoutUseEvidenceFlag_LeavesCopyrightObligationUnresolved()
+    {
+        var sbomPath = WriteEvidenceOnlyCopyrightFixtureSbom();
+        var outDir = Path.Combine(Path.GetTempPath(), $"attributary-out-{Guid.NewGuid()}");
+        var options = new GenerateCliOptions(
+            sbomPath, outDir, [OutputFormat.Txt], GroupByLicense: true, EmbedLicenseText: true,
+            DryRun: false, FailFast: false, NoCache: true, CacheDir: null, ConfigPath: null,
+            SeverityOverridesParser.Parse(false, null, null, null, null), UseEvidence: false);
+        var runner = new GenerateRunner(AnsiConsole.Console);
+
+        var exitCode = await runner.RunAsync(options, CancellationToken.None);
+
+        await Assert.That(exitCode).IsEqualTo(1);
+    }
+
+    [Test]
+    public async Task RunAsync_EvidenceOnlyCopyright_WithUseEvidenceFlag_ResolvesCopyrightObligation()
+    {
+        var sbomPath = WriteEvidenceOnlyCopyrightFixtureSbom();
+        var outDir = Path.Combine(Path.GetTempPath(), $"attributary-out-{Guid.NewGuid()}");
+        var options = new GenerateCliOptions(
+            sbomPath, outDir, [OutputFormat.Txt], GroupByLicense: true, EmbedLicenseText: true,
+            DryRun: false, FailFast: false, NoCache: true, CacheDir: null, ConfigPath: null,
+            SeverityOverridesParser.Parse(false, null, null, null, null), UseEvidence: true);
+        var runner = new GenerateRunner(AnsiConsole.Console);
+
+        var exitCode = await runner.RunAsync(options, CancellationToken.None);
+
+        await Assert.That(exitCode).IsEqualTo(0);
+    }
+
     [Test]
     public async Task RunAsync_DryRun_DoesNotCreateOutputDirectory()
     {

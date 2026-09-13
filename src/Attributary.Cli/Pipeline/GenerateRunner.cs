@@ -60,13 +60,22 @@ public sealed class GenerateRunner(IAnsiConsole console)
         var globalPackagesFolder = Environment.GetEnvironmentVariable("NUGET_PACKAGES")
             ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".nuget", "packages");
 
-        return
+        var httpClient = new HttpClient();
+
+        List<ILicenseSource> sources =
         [
             new SbomEmbeddedSource(),
             WithCache(new NuGetLocalCacheSource(globalPackagesFolder)),
-            WithCache(new GitHubVcsSource(new HttpClient())),
-            WithCache(new SpdxCanonicalSource())
+            WithCache(new SbomLicenseUrlSource(httpClient)),
+            WithCache(new GitHubVcsSource(httpClient))
         ];
+
+        if (options.UseEvidence)
+            sources.Add(new SbomEvidenceSource());
+
+        sources.Add(WithCache(new SpdxCanonicalSource()));
+
+        return sources;
     }
 
     private static void WriteFiles(GenerateCliOptions options, GenerateOutput output)

@@ -14,4 +14,5 @@ public sealed record GenerateCliOptions(
     bool NoCache,
     string? CacheDir,
     string? ConfigPath,
-    SeverityOverrides SeverityOverrides);
+    SeverityOverrides SeverityOverrides,
+    bool UseEvidence = false);

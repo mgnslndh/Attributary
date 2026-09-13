@@ -48,4 +48,7 @@ public sealed class GenerateCommandSettings : CommandSettings
 
     [CommandOption("--severity <PAIRS>")]
     public string? Severity { get; init; }
+
+    [CommandOption("--use-evidence")]
+    public bool UseEvidence { get; init; }
 }

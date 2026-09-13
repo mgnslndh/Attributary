@@ -24,7 +24,8 @@ public sealed class GenerateCommand(GenerateRunner runner) : AsyncCommand<Genera
             settings.NoCache,
             settings.CacheDir,
             settings.ConfigPath,
-            SeverityOverridesParser.Parse(settings.WarnAsErrorAll, settings.WarnAsErrorCodes, settings.WarnAsErrorExempt, settings.NoWarnCodes, settings.Severity));
+            SeverityOverridesParser.Parse(settings.WarnAsErrorAll, settings.WarnAsErrorCodes, settings.WarnAsErrorExempt, settings.NoWarnCodes, settings.Severity),
+            UseEvidence: settings.UseEvidence);
 
         return await runner.RunAsync(options, cancellationToken);
     }
