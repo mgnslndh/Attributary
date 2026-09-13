@@ -90,9 +90,9 @@ public sealed record SbomComponent(
 
 public sealed record LicenseResolution(
     SbomComponent Component,
-    string? ResolvedLicenseId,     // SPDX id, or free-text name if non-SPDX
+    IReadOnlyList<string> ResolvedLicenseIds,  // SPDX id(s) or free-text name; >1 entry for a flat-AND component (§6a); empty means unresolved (OR/non-flat)
     string? CopyrightText,
-    string? LicenseText,
+    IReadOnlyDictionary<string, string> LicenseTextsByLicenseId,  // keyed by each resolved id; one entry for the common single-license case
     string? NoticeText,
     ResolutionProvenance Provenance);  // which source strategy resolved each field, cache hit/miss, fetch time, source URL
 
@@ -205,33 +205,44 @@ License Resolution with a diagnostic (§2, §6).
 Ordered fallback chain, each strategy either resolves a field or hands off
 to the next:
 
-1. **SBOM-embedded** — `component.licenses[].license.text` (if a scanner
-   embedded full text) and `component.evidence.licenses[]` (CycloneDX
-   1.5+, lower-confidence corroboration), plus `component.copyright`.
-   Free, offline, authoritative for what's already in the SBOM.
-2. **Local package cache** — ecosystem-specific, no configuration
-   required. For NuGet: read the `.nuspec` and any embedded license file
-   from the global-packages folder (or a scratch restore) for the exact
-   package/version — the fastest and most exact source when available.
-3. **VCS repository** — via `externalReferences[type=vcs]`: GitHub REST
-   `GET /repos/{owner}/{repo}/license` when the repo is on GitHub; a
-   raw-file guess (`LICENSE`, `LICENSE.md`, `NOTICE`, ...) for other Git
-   hosts. A `externalReferences[type=license]` entry, when present, is
-   consulted first as a direct URL — cheaper than VCS guessing.
-4. **SPDX canonical text** — a vendored offline snapshot of
-   `spdx/license-list-data`'s per-ID license text, keyed by SPDX id. This
-   is the terminal, always-available fallback for `license-text`; it can
-   never satisfy a component-specific `copyright` obligation (the text is
-   generic, with no copyright holder filled in).
-5. **Exhausted** — the obligation is unresolved; diagnostic emitted
+1. **SBOM-embedded** (`SbomEmbeddedSource`) — `component.copyright`, plus
+   `component.licenses[].license.text` when the SBOM has exactly one
+   declared license (a scanner-embedded full text). Free, offline,
+   authoritative for what's already in the SBOM.
+2. **Local package cache** (`NuGetLocalCacheSource`) — ecosystem-specific,
+   no configuration required. For NuGet: read the `.nuspec` and any
+   embedded license file from the global-packages folder (or a scratch
+   restore) for the exact package/version — the fastest and most exact
+   source when available. A no-op for non-NuGet components.
+3. **License-type external reference** (`SbomLicenseUrlSource`) — a
+   `externalReferences[type=license]` entry, when present, fetched
+   directly as a URL — cheaper than VCS guessing, and ecosystem-agnostic
+   (works for native/file-share components too). Guards against a response
+   that's actually an HTML page rather than raw text.
+4. **VCS repository** (`GitHubVcsSource`) — via
+   `externalReferences[type=vcs]`: GitHub REST
+   `GET /repos/{owner}/{repo}/license` when the repo is on GitHub.
+5. **Evidence-derived copyright** (`SbomEvidenceSource`, opt-in via
+   `--use-evidence`, default off) — `component.evidence.copyright[]`
+   (distinct from `component.evidence.licenses[]`, which is only used for
+   corroboration, not consumed as a source): scanner-detected copyright
+   strings, a lower-confidence signal not consulted unless explicitly
+   requested.
+6. **SPDX canonical text** (`SpdxCanonicalSource`) — a vendored offline
+   snapshot of `spdx/license-list-data`'s per-ID license text, keyed by
+   SPDX id. This is the terminal, always-available fallback for
+   `license-text`; it can never satisfy a component-specific `copyright`
+   obligation (the text is generic, with no copyright holder filled in).
+7. **Exhausted** — the obligation is unresolved; diagnostic emitted
    (default severity per §8), pointing at SBOM enrichment as the fix.
 
-Native/file-share components with no package manager or VCS metadata skip
-straight from step 1 to step 4/5 — for these, `license-text` may still
-resolve generically via SPDX canonical text, but `copyright` will very
-often fail and surface a diagnostic, which is expected and intentional
-(push back to enriching the SBOM with a `copyright` field for that
-component).
+Native/file-share components with no package manager metadata skip step 2
+(NuGet-only) but may still resolve via steps 3-5 before falling to step 6
+(SPDX canonical, `license-text` only) or step 7 — this is exactly the
+scenario steps 3 and 5 were added for. `copyright` still fails and surfaces
+a diagnostic more often for these components than for a well-described
+NuGet package, which is expected and intentional (push back to enriching
+the SBOM with a `copyright` field for that component).
 
 ### Caching
 
@@ -254,6 +265,108 @@ component).
 - **CLI**: `--no-cache` on `generate` bypasses the cache entirely for that
   run (no read, no write). `attributary cache clear|list|path` is a
   separate verb group for cache maintenance.
+
+## 6a. Multi-license (AND) composition
+
+A component can be genuinely licensed under more than one license
+simultaneously — a CycloneDX component with 2+ entries in its `licenses[]`
+array (synthesized during ingestion into a flat `"X AND Y"`-shaped
+expression, §4), or a single `licenses[].expression` field that is itself a
+flat `"X AND Y [AND Z...]"` SPDX expression. Both cases are handled
+identically once ingested, and for any number of ANDed licenses, not just
+two.
+
+**Scope: flat AND only.** An expression is eligible for automatic
+resolution only if it is *trivially flat*: no `(`, no `" OR "`, no
+`" WITH "` (case-insensitive). Anything else — genuine OR, nested
+expressions, exception clauses — keeps the existing behavior exactly:
+`ATT2001`, asking for SBOM enrichment to something this stage can resolve.
+This scope is deliberate: real SBOM-generated expressions are almost always
+flat, and Attributary's own ingestion never produces anything but a flat
+AND string when synthesizing from a multi-entry `licenses[]` array — there
+is no parsing risk for the case this exists to solve. A full SPDX-expression
+AST plus disjunctive-normal-form normalization (the general solution —
+`NuGet.Packaging`'s `NuGetLicenseExpression` parser is a ready-made,
+Microsoft-maintained option, so this would not require hand-rolling a
+parser) remains the natural escalation path if genuinely nested expressions
+ever need automatic handling. Deliberately not built now.
+
+**Resolving a flat-AND component.** `LicenseResolutionChain` splits the
+expression into its atomic ids (e.g. `["MIT", "Apache-2.0"]`) and resolves:
+
+- **Copyright and notice text once, id-agnostically**, using the existing
+  full source chain unchanged. No shipped source's copyright/notice
+  resolution actually varies by which license id is asked about — only
+  `SpdxCanonicalSource` uses its `licenseId` parameter at all, and only for
+  license text — so a component has one copyright statement and one
+  notice-or-not, regardless of how many licenses grant permission over it.
+- **License text once per atomic id, using *only* license-id-specific
+  sources.** `NuGetLocalCacheSource`, `GitHubVcsSource`, and
+  `SbomLicenseUrlSource` each resolve "the text for this package," not "the
+  text for this specific license atom" — looping the full chain per atom
+  would hand back the *same* fetched blob for both "MIT" and "Apache-2.0,"
+  misattributing one text as if it were each license's individual text.
+  That is actively wrong, not merely imprecise, so those three sources are
+  excluded from the per-atom loop entirely. Only `SpdxCanonicalSource` is
+  asked, since it already resolves text strictly by SPDX id. A new
+  `ILicenseSource.IsLicenseIdSpecific` marker (`true` only for
+  `SpdxCanonicalSource`) lets the chain select the right source subset
+  without type-checking. If an atom is not in the bundled SPDX dataset,
+  that atom's `license-text` obligation goes unresolved — the existing
+  `ATT3010` diagnostic fires for it, the same honest gap-reporting as
+  today, just scoped to one atom of a multi-license component instead of
+  the whole component.
+
+**Rule matching.** `RuleMatcher.MatchExpression` — built alongside
+`RuleMatcher.Match` from the start, previously unwired — becomes the
+obligation-plan builder's entry point for every resolution, not just
+multi-id ones: it unions each matched rule's `Require`/`Flags` and takes
+the most restrictive `Policy`, and calling it with a 1-element id list
+produces the identical result `Match` alone already does. One code path
+for both cases.
+
+**Domain model changes.** `LicenseResolution.ResolvedLicenseId` (`string?`)
+becomes `ResolvedLicenseIds` (`IReadOnlyList<string>`, empty meaning fully
+unresolved — the existing OR/non-flat case). `LicenseText` (`string?`)
+becomes `LicenseTextsByLicenseId` (`IReadOnlyDictionary<string, string>`,
+one entry per atom that resolved). This is a genuine rename/reshape, not an
+additive change — every consumer (rule engine, all three artifact document
+builders, all four output writers, the CLI orchestrator, and their tests)
+needs updating, since "one license per component" was baked into the
+original shape everywhere it appeared.
+
+**Artifact rendering.**
+
+- `LicenseTextsDocumentBuilder` dedupes by *each* atomic id across all
+  components' plans (unchanged mechanism, just iterating a list per plan
+  instead of one value).
+- `AttributionRow.LicenseId` (`string`) becomes `LicenseIds`
+  (`IReadOnlyList<string>`, always ≥1). Writers render the list per format:
+  Txt joins it with `" AND "`; Markdown/HTML render each atom as its own
+  link (`[MIT](LICENSES/MIT.txt) AND [Apache-2.0](LICENSES/Apache-2.0.txt)`)
+  inside one table cell — still one row per component; JSON emits a genuine
+  array (`"licenseIds": ["MIT", "Apache-2.0"]`), not a joined string, since
+  JSON is for programmatic consumers who shouldn't have to re-parse a
+  display string back into a list.
+- **Grouped mode**: a multi-license component appears under *every* license
+  heading it belongs to, not just one — grouping expands each row across
+  its `LicenseIds` before grouping, so the same row can appear in more than
+  one group. This is correct behavior, not a duplication bug: the
+  component genuinely is licensed under each of those licenses
+  simultaneously.
+- `ComplianceReportEntry.LicenseId` (`string`) becomes `LicenseIds`
+  (`IReadOnlyList<string>`) for the same honesty reason — the report
+  should list every license that actually applies, not one.
+
+**Out of scope for this work**, noted so it is not mistaken for an
+oversight: per-atom embedded license text for the multi-entry `licenses[]`
+case (extracting each entry's own `license.text` individually, symmetric to
+the single-entry embedded-text support already built) is not included — it
+would only help in a case this design already routes around for unrelated
+reasons (embedded text is not one of the license-id-specific sources this
+section relies on), so the payoff is small for now.
+`SbomEmbeddedSource`'s existing single-entry embedded-text behavior is
+unaffected by any of this.
 
 ## 7. Output structure & naming
 
@@ -416,17 +529,11 @@ once the core tool is stable; v1 stays a single portable package.
   components (npm, Maven, PyPI, Cargo, Go modules, OS packages).
 - RID-specific/self-contained/NativeAOT tool packaging (.NET SDK 10
   feature) for environments without a .NET runtime installed.
-- **Wire multi-license AND-composition end-to-end.** A component genuinely
-  under multiple simultaneous licenses — a real SPDX `"X AND Y"` expression,
-  or a CycloneDX component with more than one entry in its `licenses[]`
-  array (synthesized into an `"X AND Y"`-shaped expression string during
-  ingestion, §4) — currently always stops at License Resolution with an
-  `ATT2001` diagnostic asking for SBOM enrichment to a single id, the same
-  as an unresolved `OR` expression. `RuleMatcher.MatchExpression`
-  (union obligations, most-restrictive policy) already exists and is
-  tested for exactly this case, but has no caller: `LicenseResolution`
-  would need to carry a list of resolved ids instead of one to wire it in,
-  which is a real shape change to a type most of the pipeline depends on.
-  As multi-licensed components become more common to see in practice, this
-  should move from "diagnostic, ask for enrichment" to "actually resolve
-  and compose obligations across all of them."
+- Full SPDX-expression AST + disjunctive-normal-form normalization, for
+  genuinely nested/OR-containing expressions — the general escalation path
+  beyond §6a's flat-AND-only scope, if real-world nested expressions ever
+  actually show up. `NuGet.Packaging`'s `NuGetLicenseExpression` parser is
+  a ready-made option, so this would not require hand-rolling a parser.
+- Per-atom embedded license text for multi-entry `licenses[]` components
+  (§6a's "out of scope" note) — extracting each entry's own `license.text`
+  individually, symmetric to the single-entry case already built.
