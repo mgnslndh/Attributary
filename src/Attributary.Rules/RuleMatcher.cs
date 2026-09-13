@@ -16,6 +16,10 @@ public sealed class RuleMatcher : IRuleMatcher
         return ruleSet.UnknownLicenseDefault;
     }
 
+    // Not called anywhere yet — wiring a real multi-license component (an SPDX
+    // "X AND Y" expression, or multiple licenses[] entries) into resolution
+    // needs LicenseResolution to carry a list of ids instead of one. Tracked
+    // as a deferred v2 item in the design spec (§12).
     public LicenseRule MatchExpression(IReadOnlyList<string> licenseIds, RuleSet ruleSet)
     {
         var matched = licenseIds.Select(id => Match(id, ruleSet)).ToList();

@@ -416,3 +416,17 @@ once the core tool is stable; v1 stays a single portable package.
   components (npm, Maven, PyPI, Cargo, Go modules, OS packages).
 - RID-specific/self-contained/NativeAOT tool packaging (.NET SDK 10
   feature) for environments without a .NET runtime installed.
+- **Wire multi-license AND-composition end-to-end.** A component genuinely
+  under multiple simultaneous licenses — a real SPDX `"X AND Y"` expression,
+  or a CycloneDX component with more than one entry in its `licenses[]`
+  array (synthesized into an `"X AND Y"`-shaped expression string during
+  ingestion, §4) — currently always stops at License Resolution with an
+  `ATT2001` diagnostic asking for SBOM enrichment to a single id, the same
+  as an unresolved `OR` expression. `RuleMatcher.MatchExpression`
+  (union obligations, most-restrictive policy) already exists and is
+  tested for exactly this case, but has no caller: `LicenseResolution`
+  would need to carry a list of resolved ids instead of one to wire it in,
+  which is a real shape change to a type most of the pipeline depends on.
+  As multi-licensed components become more common to see in practice, this
+  should move from "diagnostic, ask for enrichment" to "actually resolve
+  and compose obligations across all of them."
