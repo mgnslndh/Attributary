@@ -15,7 +15,7 @@ public sealed class MdComplianceReportWriter : IComplianceReportWriter
         sb.AppendLine("| Component | Version | License | Source |");
         sb.AppendLine("|---|---|---|---|");
         foreach (var entry in document.Entries)
-            sb.AppendLine($"| {entry.ComponentName} | {entry.ComponentVersion} | {entry.LicenseId} | {(entry.LicenseTextSource?.ToString() ?? "unresolved")} |");
+            sb.AppendLine($"| {entry.ComponentName} | {entry.ComponentVersion} | {string.Join(" AND ", entry.LicenseIds)} | {(entry.LicenseTextSource?.ToString() ?? "unresolved")} |");
 
         sb.AppendLine();
         sb.AppendLine("## Flagged for review");
@@ -23,7 +23,7 @@ public sealed class MdComplianceReportWriter : IComplianceReportWriter
         sb.AppendLine("| Component | Version | License | Policy | Flags |");
         sb.AppendLine("|---|---|---|---|---|");
         foreach (var flag in document.FlaggedForReview)
-            sb.AppendLine($"| {flag.ComponentName} | {flag.ComponentVersion} | {flag.LicenseId} | {flag.Policy} | {string.Join(", ", flag.Flags)} |");
+            sb.AppendLine($"| {flag.ComponentName} | {flag.ComponentVersion} | {string.Join(" AND ", flag.LicenseIds)} | {flag.Policy} | {string.Join(", ", flag.Flags)} |");
 
         return sb.ToString();
     }

@@ -13,7 +13,7 @@ public sealed class TxtComplianceReportWriter : IComplianceReportWriter
         sb.AppendLine("Compliance Report");
         sb.AppendLine(new string('=', 40));
         foreach (var entry in document.Entries)
-            sb.AppendLine($"{entry.ComponentName} {entry.ComponentVersion} - {entry.LicenseId} (source: {(entry.LicenseTextSource?.ToString() ?? "unresolved")})");
+            sb.AppendLine($"{entry.ComponentName} {entry.ComponentVersion} - {string.Join(" AND ", entry.LicenseIds)} (source: {(entry.LicenseTextSource?.ToString() ?? "unresolved")})");
 
         sb.AppendLine();
         sb.AppendLine("Flagged for review");

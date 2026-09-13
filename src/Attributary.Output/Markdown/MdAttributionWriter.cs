@@ -13,11 +13,12 @@ public sealed class MdAttributionWriter : IAttributionWriter
 
         if (document.GroupByLicense)
         {
-            foreach (var group in document.Rows.GroupBy(r => r.LicenseId).OrderBy(g => g.Key, StringComparer.Ordinal))
+            var expanded = document.Rows.SelectMany(r => r.LicenseIds.Select(id => (LicenseId: id, Row: r)));
+            foreach (var group in expanded.GroupBy(x => x.LicenseId).OrderBy(g => g.Key, StringComparer.Ordinal))
             {
                 sb.AppendLine($"## {group.Key}");
                 sb.AppendLine();
-                foreach (var row in group)
+                foreach (var (_, row) in group)
                     sb.AppendLine($"- {row.ComponentName} {row.ComponentVersion} — {row.Copyright}");
                 sb.AppendLine();
 
@@ -39,7 +40,10 @@ public sealed class MdAttributionWriter : IAttributionWriter
             sb.AppendLine("| Component | Version | License | Copyright |");
             sb.AppendLine("|---|---|---|---|");
             foreach (var row in document.Rows)
-                sb.AppendLine($"| {row.ComponentName} | {row.ComponentVersion} | [{row.LicenseId}](LICENSES/{row.LicenseId}.txt) | {row.Copyright} |");
+            {
+                var licenseCell = string.Join(" AND ", row.LicenseIds.Select(id => $"[{id}](LICENSES/{id}.txt)"));
+                sb.AppendLine($"| {row.ComponentName} | {row.ComponentVersion} | {licenseCell} | {row.Copyright} |");
+            }
         }
 
         return sb.ToString();

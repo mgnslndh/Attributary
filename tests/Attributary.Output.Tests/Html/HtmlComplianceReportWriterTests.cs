@@ -11,7 +11,7 @@ public class HtmlComplianceReportWriterTests
     public async Task Render_ProducesHtmlTablesForEntriesAndFlags()
     {
         var document = new ComplianceReportDocument(
-            Entries: [new ComplianceReportEntry("Foo", "1.0.0", "MIT", ResolutionSourceStrategy.SbomEmbedded, [ObligationKind.Copyright])],
+            Entries: [new ComplianceReportEntry("Foo", "1.0.0", ["MIT"], ResolutionSourceStrategy.SbomEmbedded, [ObligationKind.Copyright])],
             FlaggedForReview: []);
         var writer = new HtmlComplianceReportWriter();
 

@@ -11,8 +11,8 @@ public class MdComplianceReportWriterTests
     public async Task Render_ProducesTablesForEntriesAndFlags()
     {
         var document = new ComplianceReportDocument(
-            Entries: [new ComplianceReportEntry("Foo", "1.0.0", "MIT", ResolutionSourceStrategy.SbomEmbedded, [ObligationKind.Copyright])],
-            FlaggedForReview: [new ReviewFlagEntry("Foo", "1.0.0", "MIT", [ObligationFlag.NonEndorsement], LicensePolicy.Allow)]);
+            Entries: [new ComplianceReportEntry("Foo", "1.0.0", ["MIT"], ResolutionSourceStrategy.SbomEmbedded, [ObligationKind.Copyright])],
+            FlaggedForReview: [new ReviewFlagEntry("Foo", "1.0.0", ["MIT"], [ObligationFlag.NonEndorsement], LicensePolicy.Allow)]);
         var writer = new MdComplianceReportWriter();
 
         var result = writer.Render(document);

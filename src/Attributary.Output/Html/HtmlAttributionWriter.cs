@@ -15,11 +15,12 @@ public sealed class HtmlAttributionWriter : IAttributionWriter
 
         if (document.GroupByLicense)
         {
-            foreach (var group in document.Rows.GroupBy(r => r.LicenseId).OrderBy(g => g.Key, StringComparer.Ordinal))
+            var expanded = document.Rows.SelectMany(r => r.LicenseIds.Select(id => (LicenseId: id, Row: r)));
+            foreach (var group in expanded.GroupBy(x => x.LicenseId).OrderBy(g => g.Key, StringComparer.Ordinal))
             {
                 sb.AppendLine($"<h2>{Encode(group.Key)}</h2>");
                 sb.AppendLine("<ul>");
-                foreach (var row in group)
+                foreach (var (_, row) in group)
                     sb.AppendLine($"<li>{Encode(row.ComponentName)} {Encode(row.ComponentVersion)} — {Encode(row.Copyright)}</li>");
                 sb.AppendLine("</ul>");
 
@@ -33,8 +34,12 @@ public sealed class HtmlAttributionWriter : IAttributionWriter
         {
             sb.AppendLine("<table><tr><th>Component</th><th>Version</th><th>License</th><th>Copyright</th></tr>");
             foreach (var row in document.Rows)
+            {
+                var licenseCell = string.Join(" AND ", row.LicenseIds.Select(id =>
+                    $"<a href=\"LICENSES/{Encode(id)}.txt\">{Encode(id)}</a>"));
                 sb.AppendLine($"<tr><td>{Encode(row.ComponentName)}</td><td>{Encode(row.ComponentVersion)}</td>"
-                    + $"<td><a href=\"LICENSES/{Encode(row.LicenseId)}.txt\">{Encode(row.LicenseId)}</a></td><td>{Encode(row.Copyright)}</td></tr>");
+                    + $"<td>{licenseCell}</td><td>{Encode(row.Copyright)}</td></tr>");
+            }
             sb.AppendLine("</table>");
         }
 

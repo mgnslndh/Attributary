@@ -19,7 +19,7 @@ public sealed class JsonAttributionWriter : IAttributionWriter
     {
         var payload = new
         {
-            components = document.Rows.Select(r => new { r.ComponentName, r.ComponentVersion, r.LicenseId, r.Copyright }),
+            components = document.Rows.Select(r => new { r.ComponentName, r.ComponentVersion, r.LicenseIds, r.Copyright }),
             licenses = document.LicenseTextsById.ToDictionary(
                 kv => kv.Key,
                 kv => document.EmbedLicenseText ? kv.Value : (string?)null)
