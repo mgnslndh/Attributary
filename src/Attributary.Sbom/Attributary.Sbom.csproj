@@ -5,7 +5,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="CycloneDX.Core" Version="12.1.2" />
+    <PackageReference Include="CycloneDX.Core" />
   </ItemGroup>
 
   
