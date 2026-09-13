@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>Attributary.Build</RootNamespace>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Cake.Frosting" />
+    <PackageReference Include="Cake.Common" />
+    <PackageReference Include="Cake.MinVer" />
+  </ItemGroup>
+
+</Project>
