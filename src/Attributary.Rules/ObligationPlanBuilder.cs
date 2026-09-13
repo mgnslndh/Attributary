@@ -7,8 +7,8 @@ public sealed class ObligationPlanBuilder(IRuleMatcher matcher) : IObligationPla
         RuleSet ruleSet,
         IReadOnlyDictionary<string, bool> conditionResults)
     {
-        var licenseId = resolution.ResolvedLicenseId ?? "UNKNOWN";
-        var rule = matcher.Match(licenseId, ruleSet);
+        var licenseIds = resolution.ResolvedLicenseIds.Count > 0 ? resolution.ResolvedLicenseIds : ["UNKNOWN"];
+        var rule = matcher.MatchExpression(licenseIds, ruleSet);
 
         var obligations = rule.Require
             .Where(o => o.Condition is null || conditionResults.GetValueOrDefault(o.Condition, false))
