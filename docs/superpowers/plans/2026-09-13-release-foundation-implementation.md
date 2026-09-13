@@ -6,7 +6,7 @@
 
 **Architecture:** Five sequential tasks, each independently buildable/testable: (1) central package management + SDK pin, (2) MinVer versioning + NuGet audit properties, (3) packaging metadata + `IsPackable=false` on internal libraries, (4) `.editorconfig`, (5) the Cake Frosting build project that wires all of the above into `Clean`/`Restore`/`Build`/`Format-Check`/`Audit`/`Test`/`Pack` tasks plus `build.ps1`/`build.sh` bootstrap scripts. Later tasks build on earlier ones (Task 5's `Build` task references the `TreatWarningsAsErrors` convention from Task 4's rationale; its `Pack` task packs the project made packable-correctly in Task 3).
 
-**Tech Stack:** .NET 10 SDK (10.0.401, pinned), MSBuild central package management, MinVer 8.0.0, Cake.Frosting 6.2.0 + Cake.Common 6.2.0, Microsoft.SourceLink.GitHub 10.0.401.
+**Tech Stack:** .NET 10 SDK (10.0.401, pinned), MSBuild central package management, MinVer 8.0.0, Cake.Frosting 6.2.0 + Cake.Common 6.2.0 + Cake.MinVer 4.0.0, Microsoft.SourceLink.GitHub 10.0.401.
 
 **Spec:** [`docs/superpowers/specs/2026-09-13-release-foundation-design.md`](../specs/2026-09-13-release-foundation-design.md)
 
@@ -16,6 +16,7 @@
 - SDK pin: `10.0.401`, `rollForward: latestFeature` in `global.json`.
 - MinVer version: `8.0.0`. Tag prefix: `v` (via `<MinVerTagPrefix>v</MinVerTagPrefix>` — MinVer's own default prefix is empty, so this must be set explicitly).
 - Cake.Frosting / Cake.Common version: `6.2.0` (must match each other).
+- Cake.MinVer version: `4.0.0`. Its `TagPrefix` setting must be `"v"`, matching `Directory.Build.props`'s `MinVerTagPrefix` — both read the same git history via the same underlying MinVer algorithm, so a mismatched prefix would make the Cake-logged version disagree with the actually-packed version.
 - Microsoft.SourceLink.GitHub version: `10.0.401`.
 - Only `Attributary.Cli` is packable (`IsPackable=true`); every other `src/` project is `IsPackable=false`.
 - `PackageTags`: `sbom;cyclonedx;spdx;license-compliance;oss-compliance;attribution;notice;third-party-notices;supply-chain;dotnet-tool`.
@@ -489,8 +490,8 @@ git commit -m "style: add root .editorconfig"
 - Delete: `scripts/Get-CodeCoverage.ps1`
 
 **Interfaces:**
-- Consumes: the solution file `Attributary.sln` (relative path, assumes CWD = repo root); `Attributary.Cli/Attributary.Cli.csproj`'s packing readiness from Task 3; the `dotnet-reportgenerator-globaltool` already declared in `.config/dotnet-tools.json`.
-- Produces: `./build.ps1 [<TaskName>]` / `./build.sh [<TaskName>]` as the single local/CI build entry point. `TaskName` defaults to `Default`, which runs `Restore` → `Build` → `Format-Check` → `Audit` → `Test`.
+- Consumes: the solution file `Attributary.sln` (relative path, assumes CWD = repo root); `Attributary.Cli/Attributary.Cli.csproj`'s packing readiness from Task 3; the `dotnet-reportgenerator-globaltool` already declared in `.config/dotnet-tools.json`; the `MinVerTagPrefix=v` convention from Task 2's root `Directory.Build.props`, mirrored here via `Cake.MinVer`'s `TagPrefix` setting.
+- Produces: `./build.ps1 [<TaskName>]` / `./build.sh [<TaskName>]` as the single local/CI build entry point. `TaskName` defaults to `Default`, which runs `Restore` → `Build` → `Format-Check` → `Audit` → `Test`. `BuildContext.Version` (the `Cake.MinVer`-computed version string) is available to any later task or later sub-project that needs it (e.g. a future release-automation task tagging a GitHub Release) — this task only consumes it for a startup log line.
 
 - [ ] **Step 1: Add Cake package versions**
 
@@ -499,7 +500,17 @@ In `Directory.Packages.props`, add to the existing `<ItemGroup>`:
 ```xml
     <PackageVersion Include="Cake.Frosting" Version="6.2.0" />
     <PackageVersion Include="Cake.Common" Version="6.2.0" />
+    <PackageVersion Include="Cake.MinVer" Version="4.0.0" />
 ```
+
+`Cake.MinVer` lets the build project itself read the same MinVer-computed
+version that `Directory.Build.props` stamps onto every assembly (Task 2),
+so the build can log which version it's building. It does not change how
+packages get versioned — that's still handled automatically by MSBuild via
+`Directory.Build.props` — this is purely for visibility in the build's own
+console output. (`#addin` directives from Cake's `.cake`-script world do
+not apply here; Cake.Frosting projects consume Cake addins as ordinary
+`PackageReference`s, same as `Cake.Frosting`/`Cake.Common` themselves.)
 
 - [ ] **Step 2: Create `build/Attributary.Build/Attributary.Build.csproj`**
 
@@ -515,6 +526,7 @@ In `Directory.Packages.props`, add to the existing `<ItemGroup>`:
   <ItemGroup>
     <PackageReference Include="Cake.Frosting" />
     <PackageReference Include="Cake.Common" />
+    <PackageReference Include="Cake.MinVer" />
   </ItemGroup>
 
 </Project>
@@ -538,20 +550,35 @@ return new CakeHost()
 using Cake.Common;
 using Cake.Core;
 using Cake.Frosting;
+using Cake.MinVer;
 
 namespace Attributary.Build;
 
 public sealed class BuildContext : FrostingContext
 {
     public string Configuration { get; }
+    public string Version { get; }
 
     public BuildContext(ICakeContext context)
         : base(context)
     {
         Configuration = context.Argument("configuration", "Release");
+
+        var minVer = context.MinVer(new MinVerSettings
+        {
+            TagPrefix = "v",
+        });
+        Version = minVer.Version;
+
+        context.Information($"Building Attributary version {Version}");
     }
 }
 ```
+
+`TagPrefix = "v"` must match `Directory.Build.props`'s `MinVerTagPrefix`
+(Task 2) exactly — both compute from the same git history via the same
+MinVer algorithm, so matching settings means this logged version and the
+version MSBuild actually stamps onto assemblies/packages always agree.
 
 - [ ] **Step 5: Create `build/Attributary.Build/Tasks/CleanTask.cs`**
 
@@ -920,7 +947,9 @@ If `scripts/` is now empty, remove it too (check with `git status` after the `rm
 
 Run: `./build.ps1` (Windows) or `./build.sh` (other platforms)
 
-Expected: `Restore`, `Build`, `Format-Check`, `Audit`, and `Test` all run in that order and all succeed — the same outcome as running `dotnet restore`, `dotnet build`, `dotnet format --verify-no-changes`, `dotnet list package --vulnerable`, and the old `Get-CodeCoverage.ps1` script separately, but through one command. Coverage summary output should appear at the end, matching what `Get-CodeCoverage.ps1` used to print.
+Expected: the very first console line is `Building Attributary version <X>` (from `BuildContext`'s `Cake.MinVer` call), then `Restore`, `Build`, `Format-Check`, `Audit`, and `Test` all run in that order and all succeed — the same outcome as running `dotnet restore`, `dotnet build`, `dotnet format --verify-no-changes`, `dotnet list package --vulnerable`, and the old `Get-CodeCoverage.ps1` script separately, but through one command. Coverage summary output should appear at the end, matching what `Get-CodeCoverage.ps1` used to print.
+
+Cross-check the logged version against MSBuild's own computation: run `dotnet msbuild src/Attributary.Cli/Attributary.Cli.csproj -t:Build -getProperty:Version -nologo` (note: plain `-getProperty:Version` without `-t:Build` does not execute MinVer's target and falsely returns the SDK's static default `1.0.0` — always include `-t:Build` when checking a MinVer-derived version this way) and confirm it prints the exact same version string `./build.ps1` logged.
 
 Run: `./build.ps1 Pack` (or `./build.sh Pack`)
 Expected: succeeds, producing `artifacts/Attributary.<version>.nupkg` and `artifacts/Attributary.<version>.snupkg`.
@@ -946,3 +975,5 @@ git commit -m "build: add Cake Frosting build orchestration with local/CI parity
 - **Vulnerability-detection logic** in Task 5's `AuditTask` was validated against this repo's actual `dotnet list package --vulnerable --include-transitive` output before writing the plan (confirmed phrase: `"has no vulnerable packages given the current sources."`, confirmed exit code `0` even when nothing is flagged) rather than assumed from documentation.
 - **`MinVerTagPrefix` correction:** the spec originally stated MinVer defaults to a `v` prefix; this was factually wrong (MinVer's default prefix is empty) and has been corrected in both the spec and this plan — Task 2 explicitly sets `<MinVerTagPrefix>v</MinVerTagPrefix>`.
 - **`Domain`/`Resolution`/`Artifacts`/`Output`/`Diagnostics` projects have no `PackageReference`s at all**, so Task 1 does not touch them — only `Cli`, `Rules`, `Sbom`, and the 7 test projects have package versions to strip.
+- **Mid-execution amendment (added during Task 5 dispatch prep, after Tasks 1-2 were already committed and reviewed):** added `Cake.MinVer` 4.0.0 to Task 5 so the build itself logs the version it's building, using the same `TagPrefix="v"` convention as Task 2's `Directory.Build.props`. This does not change how packages/assemblies get versioned (still automatic via MSBuild) — it only adds visibility. Prompted by user feedback during the loop; folded into Task 5 before that task was dispatched, so no rework of already-completed tasks was needed.
+- **`dotnet msbuild -getProperty:Version` verification-command defect (discovered during Task 2's review):** the plan originally told the implementer to verify MinVer via `dotnet msbuild <project> -getProperty:Version` with no `-t:Build`. That command does not execute MinVer's target and silently returns the SDK's static default (`1.0.0`) regardless of correctness. Confirmed by direct experiment (see Task 2's ledger entry). The underlying implementation was independently verified correct via `dotnet build -v:detailed` and via `dotnet msbuild <project> -t:Build -getProperty:Version`. Task 5 Step 16 has been updated to use the corrected `-t:Build` form when cross-checking the Cake-logged version against MSBuild's own computation.
