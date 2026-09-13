@@ -34,6 +34,11 @@ public sealed class TestTask : FrostingTask<BuildContext>
             var projectName = project.GetFilenameWithoutExtension().ToString();
             var projectResultsDir = testResultsRoot.Combine(projectName);
 
+            if (context.DirectoryExists(projectResultsDir))
+            {
+                context.DeleteDirectory(projectResultsDir, new DeleteDirectorySettings { Recursive = true, Force = true });
+            }
+
             var exitCode = context.StartProcess("dotnet", new ProcessSettings
             {
                 Arguments = new ProcessArgumentBuilder()
