@@ -10,15 +10,15 @@ public static class AttributionDocumentBuilder
             .Select(p => new AttributionRow(
                 p.Resolution.Component.Name,
                 p.Resolution.Component.Version,
-                p.Resolution.ResolvedLicenseId ?? "UNKNOWN",
+                p.Resolution.ResolvedLicenseIds.Count > 0 ? p.Resolution.ResolvedLicenseIds : ["UNKNOWN"],
                 p.Resolution.CopyrightText ?? ""))
             .OrderBy(r => r.ComponentName, StringComparer.Ordinal)
             .ToList();
 
         var licenseTexts = plans
-            .Where(p => p.Resolution.ResolvedLicenseId is not null && p.Resolution.LicenseText is not null)
-            .GroupBy(p => p.Resolution.ResolvedLicenseId!)
-            .ToDictionary(g => g.Key, g => g.First().Resolution.LicenseText!);
+            .SelectMany(p => p.Resolution.LicenseTextsByLicenseId)
+            .GroupBy(kv => kv.Key)
+            .ToDictionary(g => g.Key, g => g.First().Value);
 
         return new AttributionDocument(rows, licenseTexts, groupByLicense, embedLicenseText);
     }

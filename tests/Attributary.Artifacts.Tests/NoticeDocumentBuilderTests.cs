@@ -6,7 +6,7 @@ namespace Attributary.Artifacts.Tests;
 public class NoticeDocumentBuilderTests
 {
     private static ObligationPlan BuildPlan(string name, string? noticeText, params ObligationKind[] obligations) => new(
-        new LicenseResolution(
+        LicenseResolution.ForSingleLicense(
             new SbomComponent(name, "1.0.0", null, LicenseExpression.FromId("Apache-2.0"), "Copyright X", [], []),
             "Apache-2.0", "Copyright X", "Apache text", noticeText),
         LicensePolicy.Allow,

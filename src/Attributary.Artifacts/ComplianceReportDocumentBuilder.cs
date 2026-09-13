@@ -9,7 +9,7 @@ public static class ComplianceReportDocumentBuilder
         var entries = plans.Select(p => new ComplianceReportEntry(
                 p.Resolution.Component.Name,
                 p.Resolution.Component.Version,
-                p.Resolution.ResolvedLicenseId ?? "UNKNOWN",
+                p.Resolution.ResolvedLicenseIds.Count > 0 ? p.Resolution.ResolvedLicenseIds : ["UNKNOWN"],
                 p.Resolution.Provenance?.LicenseTextProvenance?.Strategy,
                 p.Obligations.Select(o => o.Kind).ToList()))
             .ToList();
@@ -19,7 +19,7 @@ public static class ComplianceReportDocumentBuilder
             .Select(p => new ReviewFlagEntry(
                 p.Resolution.Component.Name,
                 p.Resolution.Component.Version,
-                p.Resolution.ResolvedLicenseId ?? "UNKNOWN",
+                p.Resolution.ResolvedLicenseIds.Count > 0 ? p.Resolution.ResolvedLicenseIds : ["UNKNOWN"],
                 p.Flags,
                 p.Policy))
             .ToList();
