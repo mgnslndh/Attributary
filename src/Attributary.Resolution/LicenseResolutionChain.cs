@@ -39,7 +39,9 @@ public sealed class LicenseResolutionChain(IReadOnlyList<ILicenseSource> sources
             return false;
         }
 
-        var split = expression.Split(" AND ", StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
+        var split = expression.Split(" AND ", StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)
+            .Distinct(StringComparer.Ordinal)
+            .ToArray();
         if (split.Length < 2)
             return false;
 
@@ -90,7 +92,10 @@ public sealed class LicenseResolutionChain(IReadOnlyList<ILicenseSource> sources
             if (copyrightText is null && result.CopyrightText is not null) { copyrightText = result.CopyrightText; copyrightProvenance = result.Provenance; }
             if (noticeText is null && result.NoticeText is not null) { noticeText = result.NoticeText; noticeProvenance = result.Provenance; }
 
-            if (copyrightText is not null && noticeText is not null) break;
+            // No shipped source resolves notice text, so gating the break on it would
+            // walk the whole chain every time -- including network sources that cannot
+            // supply copyright at all. Mirror ResolveSingleLicenseAsync's pragmatism.
+            if (copyrightText is not null) break;
         }
 
         // License text: only id-specific sources are safe to ask per atom (see

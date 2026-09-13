@@ -83,6 +83,48 @@ public class LicenseResolutionChainTests
     }
 
     [Test]
+    public async Task ResolveAsync_WithExpression_StillReportsMultiLicenseFlavoredMessageAndDoesNotCallSources()
+    {
+        // "GPL-2.0-only WITH Classpath-exception-2.0 AND MIT" contains a WITH
+        // exception clause -- not eligible for automatic flat-AND resolution,
+        // so it keeps the existing diagnostic and never calls a source.
+        var callCount = 0;
+        var sources = new ILicenseSource[] { new CountingFakeSource(() => callCount++) };
+        var chain = new LicenseResolutionChain(sources);
+        var sink = new DiagnosticSink(SeverityOverrides.None);
+
+        var resolution = await chain.ResolveAsync(
+            BuildComponent(LicenseExpression.FromExpression("GPL-2.0-only WITH Classpath-exception-2.0 AND MIT")),
+            sink, CancellationToken.None);
+
+        await Assert.That(resolution.ResolvedLicenseIds).IsEmpty();
+        await Assert.That(callCount).IsEqualTo(0);
+        await Assert.That(sink.Diagnostics.Single().Descriptor.Code).IsEqualTo("ATT2001");
+        await Assert.That(sink.Diagnostics.Single().Message).Contains("multi-license expression");
+    }
+
+    [Test]
+    public async Task ResolveAsync_DuplicateAtomFlatAndExpression_CollapsesToOneAtomAndReportsDiagnostic()
+    {
+        // "MIT AND MIT" dedupes to a single atom, which is no longer eligible
+        // for flat-AND auto-resolution -- it should fall back to the existing
+        // ATT2001-style diagnostic rather than silently resolving to
+        // ["MIT", "MIT"].
+        var callCount = 0;
+        var sources = new ILicenseSource[] { new CountingFakeSource(() => callCount++) };
+        var chain = new LicenseResolutionChain(sources);
+        var sink = new DiagnosticSink(SeverityOverrides.None);
+
+        var resolution = await chain.ResolveAsync(
+            BuildComponent(LicenseExpression.FromExpression("MIT AND MIT")), sink, CancellationToken.None);
+
+        await Assert.That(resolution.ResolvedLicenseIds).IsEmpty();
+        await Assert.That(callCount).IsEqualTo(0);
+        await Assert.That(sink.Diagnostics.Single().Descriptor.Code).IsEqualTo("ATT2001");
+        await Assert.That(sink.Diagnostics.Single().Message).Contains("multi-license expression");
+    }
+
+    [Test]
     public async Task ResolveAsync_FlatAndExpression_AutoResolvesEachAtomViaIdSpecificSourceOnly()
     {
         var canonicalProvenance = new FieldProvenance(ResolutionSourceStrategy.SpdxCanonical, null, DateTimeOffset.UtcNow, false);

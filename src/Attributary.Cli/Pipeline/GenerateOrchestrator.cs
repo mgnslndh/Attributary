@@ -54,7 +54,9 @@ public sealed class GenerateOrchestrator(
 
     private void ReportPolicyDiagnostic(ObligationPlan plan, string context)
     {
-        var licenseLabel = string.Join(" AND ", plan.Resolution.ResolvedLicenseIds);
+        var licenseLabel = plan.Resolution.ResolvedLicenseIds.Count > 0
+            ? string.Join(" AND ", plan.Resolution.ResolvedLicenseIds)
+            : "UNKNOWN";
         if (plan.Policy == LicensePolicy.Deny)
             diagnostics.Report(RuleEngineDiagnostics.PolicyDenied, $"License '{licenseLabel}' is denied by policy.", context);
         else if (plan.Policy == LicensePolicy.Warn)
@@ -87,7 +89,9 @@ public sealed class GenerateOrchestrator(
 
             if (!resolved)
             {
-                var licenseLabel = string.Join(" AND ", plan.Resolution.ResolvedLicenseIds);
+                var licenseLabel = plan.Resolution.ResolvedLicenseIds.Count > 0
+                    ? string.Join(" AND ", plan.Resolution.ResolvedLicenseIds)
+                    : "UNKNOWN";
                 diagnostics.Report(RuleEngineDiagnostics.RequiredObligationUnresolved,
                     $"Required obligation '{obligation.Kind}' could not be resolved for license '{licenseLabel}'.", context);
             }
