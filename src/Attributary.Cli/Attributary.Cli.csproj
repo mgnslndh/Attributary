@@ -21,6 +21,30 @@
     <PackAsTool>true</PackAsTool>
     <ToolCommandName>attributary</ToolCommandName>
     <PackageId>Attributary</PackageId>
+    <IsPackable>true</IsPackable>
+
+    <Description>Attributary is a .NET CLI tool that reads a CycloneDX SBOM and generates the artifacts you need to be open source license compliant when distributing a piece of software: per-license license files, an aggregated NOTICE file, a third-party attribution document, and a compliance report -- in text, Markdown, JSON, or HTML.</Description>
+    <Authors>Magnus Lindhe</Authors>
+    <PackageProjectUrl>https://github.com/mgnslndh/Attributary</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/mgnslndh/Attributary</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageTags>sbom;cyclonedx;spdx;license-compliance;oss-compliance;attribution;notice;third-party-notices;supply-chain;dotnet-tool</PackageTags>
+    <PackageReleaseNotes>See https://github.com/mgnslndh/Attributary/blob/main/CHANGELOG.md</PackageReleaseNotes>
+
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="..\..\README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.SourceLink.GitHub" PrivateAssets="All" />
+  </ItemGroup>
 
 </Project>
