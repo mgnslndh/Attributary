@@ -1,0 +1,23 @@
+{
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.5",
+  "version": 1,
+  "components": [
+    {
+      "type": "library",
+      "name": "plain-text-lib",
+      "version": "1.0.0",
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT",
+            "text": {
+              "contentType": "text/plain",
+              "content": "MIT License full plain text"
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

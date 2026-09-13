@@ -1,6 +1,6 @@
 namespace Attributary.Domain;
 
-public enum ResolutionSourceStrategy { SbomEmbedded, LocalPackageCache, VcsRepository, SpdxCanonical }
+public enum ResolutionSourceStrategy { SbomEmbedded, LocalPackageCache, VcsRepository, SpdxCanonical, LicenseUrl, Evidence }
 
 public sealed record FieldProvenance(ResolutionSourceStrategy Strategy, string? SourceUrl, DateTimeOffset ResolvedAtUtc, bool FromCache);
 

@@ -1,3 +1,4 @@
+using System.Text;
 using Attributary.Domain;
 using CycloneDX.Json;
 using CycloneDX.Models;
@@ -26,6 +27,12 @@ public sealed class CycloneDxIngestor
             .Select(e => new LicenseEvidence(e.License?.Id, e.License?.Name, null))
             .ToList();
 
+        var evidenceCopyrightTexts = (component.Evidence?.Copyright ?? [])
+            .Select(c => c.Text)
+            .Where(t => t is not null)
+            .Cast<string>()
+            .ToList();
+
         return new SbomComponent(
             Name: component.Name,
             Version: component.Version,
@@ -33,7 +40,23 @@ public sealed class CycloneDxIngestor
             DeclaredLicense: MapDeclaredLicense(component.Licenses),
             RawCopyright: component.Copyright,
             ExternalReferences: externalRefs,
-            Evidence: evidence);
+            Evidence: evidence,
+            EmbeddedLicenseText: ExtractEmbeddedLicenseText(component.Licenses),
+            EvidenceCopyrightTexts: evidenceCopyrightTexts);
+    }
+
+    private static string? ExtractEmbeddedLicenseText(List<LicenseChoice>? licenses)
+    {
+        if (licenses is not { Count: 1 })
+            return null;
+
+        var text = licenses[0].License?.Text;
+        if (text?.Content is null)
+            return null;
+
+        return string.Equals(text.Encoding, "base64", StringComparison.OrdinalIgnoreCase)
+            ? Encoding.UTF8.GetString(Convert.FromBase64String(text.Content))
+            : text.Content;
     }
 
     private static LicenseExpression MapDeclaredLicense(List<LicenseChoice>? licenses)

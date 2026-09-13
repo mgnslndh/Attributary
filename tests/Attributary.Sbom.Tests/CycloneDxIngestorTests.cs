@@ -47,4 +47,26 @@ public class CycloneDxIngestorTests
         var component = components[0];
         await Assert.That(component.DeclaredLicense.SpdxExpression).IsEqualTo("MIT AND JSON");
     }
+
+    [Test]
+    public async Task Ingest_SingleLicenseWithPlainEmbeddedText_ExtractsEmbeddedLicenseText()
+    {
+        var ingestor = new CycloneDxIngestor();
+
+        var components = ingestor.Ingest(Path.Combine("fixtures", "embedded-license-text-plain.cdx.json"));
+
+        await Assert.That(components).Count().IsEqualTo(1);
+        await Assert.That(components[0].EmbeddedLicenseText).IsEqualTo("MIT License full plain text");
+    }
+
+    [Test]
+    public async Task Ingest_SingleLicenseWithBase64EmbeddedText_DecodesEmbeddedLicenseText()
+    {
+        var ingestor = new CycloneDxIngestor();
+
+        var components = ingestor.Ingest(Path.Combine("fixtures", "embedded-license-text-base64.cdx.json"));
+
+        await Assert.That(components).Count().IsEqualTo(1);
+        await Assert.That(components[0].EmbeddedLicenseText).IsEqualTo("MIT License full base64 text");
+    }
 }

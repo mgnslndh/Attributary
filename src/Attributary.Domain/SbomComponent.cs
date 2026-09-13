@@ -7,4 +7,6 @@ public sealed record SbomComponent(
     LicenseExpression DeclaredLicense,
     string? RawCopyright,
     IReadOnlyList<ExternalReference> ExternalReferences,
-    IReadOnlyList<LicenseEvidence> Evidence);
+    IReadOnlyList<LicenseEvidence> Evidence,
+    string? EmbeddedLicenseText = null,
+    IReadOnlyList<string>? EvidenceCopyrightTexts = null);
