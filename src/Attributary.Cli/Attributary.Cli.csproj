@@ -21,7 +21,6 @@
     <PackAsTool>true</PackAsTool>
     <ToolCommandName>attributary</ToolCommandName>
     <PackageId>Attributary</PackageId>
-    <Version>0.1.0</Version>
   </PropertyGroup>
 
 </Project>
