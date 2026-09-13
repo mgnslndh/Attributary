@@ -2,7 +2,15 @@ root = true
 
 [*]
 charset = utf-8
-end_of_line = crlf
+# This repo's canonical line ending is LF: the committed git blobs are LF
+# throughout (git's "LF will be replaced by CRLF" warning on Windows just
+# describes local working-tree expansion via core.autocrlf, not the
+# repository's actual content). Do not change this to crlf without
+# checking with the user first -- some contributors' local git config may
+# expand these to CRLF in their working tree, but the committed blobs and
+# this setting should stay LF so `dotnet format --verify-no-changes`
+# behaves the same on every platform (including Linux/macOS CI runners).
+end_of_line = lf
 insert_final_newline = true
 trim_trailing_whitespace = true
 indent_style = space
