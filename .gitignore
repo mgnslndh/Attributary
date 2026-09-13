@@ -3,6 +3,9 @@
 ##
 ## Get latest from https://github.com/github/gitignore/blob/main/VisualStudio.gitignore
 
+# Local git worktrees (superpowers subagent-driven-development workspaces)
+.worktrees/
+
 # User-specific files
 *.rsuser
 *.suo
