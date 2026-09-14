@@ -36,12 +36,17 @@ jobs:
         shell: pwsh
         run: ./build.ps1
 
+      - name: Find coverage files
+        if: runner.os == 'Linux'
+        id: coverage
+        run: echo "files=$(find TestResults -name '*.cobertura.xml' | paste -sd ',')" >> "$GITHUB_OUTPUT"
+
       - name: Upload coverage to Codecov
         if: runner.os == 'Linux'
         uses: codecov/codecov-action@v7
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          directory: TestResults
+          files: ${{ steps.coverage.outputs.files }}
           fail_ci_if_error: false
 
       - name: Pack
