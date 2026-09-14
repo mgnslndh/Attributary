@@ -1,6 +1,6 @@
 using Attributary.Cli.Commands;
-using Attributary.Resolution.Caching;
 using Attributary.Domain;
+using Attributary.Resolution.Caching;
 using Spectre.Console.Cli;
 using Spectre.Console.Testing;
 

@@ -1,0 +1,54 @@
+root = true
+
+[*]
+charset = utf-8
+# This repo's canonical line ending is LF: the committed git blobs are LF
+# throughout (git's "LF will be replaced by CRLF" warning on Windows just
+# describes local working-tree expansion via core.autocrlf, not the
+# repository's actual content). Do not change this to crlf without
+# checking with the user first -- some contributors' local git config may
+# expand these to CRLF in their working tree, but the committed blobs and
+# this setting should stay LF so `dotnet format --verify-no-changes`
+# behaves the same on every platform (including Linux/macOS CI runners).
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+indent_style = space
+
+[*.cs]
+indent_size = 4
+
+[*.{yaml,yml,json,md}]
+indent_size = 2
+
+# .NET code style rules
+[*.cs]
+dotnet_sort_system_directives_first = true
+dotnet_style_qualification_for_field = false:suggestion
+dotnet_style_qualification_for_property = false:suggestion
+dotnet_style_qualification_for_method = false:suggestion
+dotnet_style_qualification_for_event = false:suggestion
+dotnet_style_require_accessibility_modifiers = for_non_interface_members:suggestion
+dotnet_style_predefined_type_for_locals_parameters_members = true:suggestion
+dotnet_style_predefined_type_for_member_access = true:suggestion
+dotnet_style_object_initializer = true:suggestion
+dotnet_style_collection_initializer = true:suggestion
+dotnet_style_prefer_auto_properties = true:suggestion
+dotnet_style_coalesce_expression = true:suggestion
+dotnet_style_null_propagation = true:suggestion
+
+# C# code style rules
+csharp_style_var_for_built_in_types = true:suggestion
+csharp_style_var_when_type_is_apparent = true:suggestion
+csharp_style_var_elsewhere = true:suggestion
+csharp_style_expression_bodied_methods = when_on_single_line:suggestion
+csharp_style_expression_bodied_properties = true:suggestion
+csharp_prefer_braces = true:suggestion
+csharp_new_line_before_open_brace = all
+csharp_new_line_before_else = true
+csharp_new_line_before_catch = true
+csharp_new_line_before_finally = true
+csharp_indent_case_contents = true
+csharp_indent_switch_labels = true
+csharp_space_after_cast = false
+csharp_space_between_method_call_parameter_list_parentheses = false
