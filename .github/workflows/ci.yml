@@ -38,10 +38,10 @@ jobs:
 
       - name: Upload coverage to Codecov
         if: runner.os == 'Linux'
-        uses: codecov/codecov-action@v5
+        uses: codecov/codecov-action@v7
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          files: TestResults/**/*.cobertura.xml
+          directory: TestResults
           fail_ci_if_error: false
 
       - name: Pack
@@ -56,3 +56,4 @@ jobs:
           path: |
             artifacts/*.nupkg
             artifacts/*.snupkg
+          if-no-files-found: error
