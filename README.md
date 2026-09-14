@@ -1,5 +1,8 @@
 # Attributary
 
+[![CI](https://github.com/mgnslndh/Attributary/actions/workflows/ci.yml/badge.svg)](https://github.com/mgnslndh/Attributary/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/mgnslndh/Attributary/graph/badge.svg)](https://codecov.io/gh/mgnslndh/Attributary)
+
 Attributary is a .NET CLI tool that reads a [CycloneDX](https://cyclonedx.org/) SBOM and generates the artifacts you need to be open source license compliant when distributing a piece of software: per-license license files, an aggregated NOTICE file, a third-party attribution document, and a compliance report — in text, Markdown, JSON, or HTML.
 
 It's driven by a rule engine you can configure: for each license it knows about, the rules say what must be produced (a copyright line, the license text, a NOTICE entry) and what policy applies (allow it, warn about it, or deny it outright). Attributary ships with a bundled default rule set covering ~20 common OSS licenses, and you can layer your own rules on top.
